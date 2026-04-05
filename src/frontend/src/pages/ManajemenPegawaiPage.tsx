@@ -26,14 +26,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Plus, Trash2, Users } from "lucide-react";
+import { MapPin, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { Employee } from "../types";
 import { getEmployees, saveEmployees } from "../utils/storage";
 
-type FormData = Omit<Employee, "id" | "createdAt">;
+type FormData = Omit<Employee, "id" | "createdAt"> & {
+  kecamatanLatStr: string;
+  kecamatanLonStr: string;
+};
 
 const emptyForm: FormData = {
   nama: "",
@@ -44,6 +47,10 @@ const emptyForm: FormData = {
   username: "",
   password: "",
   status: "Aktif",
+  kecamatanLat: null,
+  kecamatanLon: null,
+  kecamatanLatStr: "",
+  kecamatanLonStr: "",
 };
 
 export default function ManajemenPegawaiPage() {
@@ -52,9 +59,9 @@ export default function ManajemenPegawaiPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<
-    Partial<Record<keyof FormData, string>>
-  >({});
+  const [formErrors, setFormErrors] = useState<Partial<Record<string, string>>>(
+    {},
+  );
 
   const pegawaiCount = useMemo(
     () => employees.filter((e) => e.role === "pegawai").length,
@@ -66,7 +73,7 @@ export default function ManajemenPegawaiPage() {
   };
 
   const validateForm = (): boolean => {
-    const errors: Partial<Record<keyof FormData, string>> = {};
+    const errors: Partial<Record<string, string>> = {};
     if (!formData.nama.trim()) errors.nama = "Nama wajib diisi";
     if (!formData.nip.trim()) errors.nip = "NIP wajib diisi";
     if (!formData.jabatan.trim()) errors.jabatan = "Jabatan wajib diisi";
@@ -74,6 +81,16 @@ export default function ManajemenPegawaiPage() {
     if (!formData.username.trim()) errors.username = "Username wajib diisi";
     if (!editingId && !formData.password.trim())
       errors.password = "Password wajib diisi";
+    if (
+      formData.kecamatanLatStr &&
+      Number.isNaN(Number.parseFloat(formData.kecamatanLatStr))
+    )
+      errors.kecamatanLatStr = "Latitude tidak valid";
+    if (
+      formData.kecamatanLonStr &&
+      Number.isNaN(Number.parseFloat(formData.kecamatanLonStr))
+    )
+      errors.kecamatanLonStr = "Longitude tidak valid";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -96,6 +113,10 @@ export default function ManajemenPegawaiPage() {
       username: emp.username,
       password: emp.password,
       status: emp.status,
+      kecamatanLat: emp.kecamatanLat ?? null,
+      kecamatanLon: emp.kecamatanLon ?? null,
+      kecamatanLatStr: emp.kecamatanLat != null ? String(emp.kecamatanLat) : "",
+      kecamatanLonStr: emp.kecamatanLon != null ? String(emp.kecamatanLon) : "",
     });
     setFormErrors({});
     setIsDialogOpen(true);
@@ -104,13 +125,28 @@ export default function ManajemenPegawaiPage() {
   const handleSave = () => {
     if (!validateForm()) return;
     const all = getEmployees();
+    const kecamatanLat = formData.kecamatanLatStr
+      ? Number.parseFloat(formData.kecamatanLatStr)
+      : null;
+    const kecamatanLon = formData.kecamatanLonStr
+      ? Number.parseFloat(formData.kecamatanLonStr)
+      : null;
+
     if (editingId) {
       const idx = all.findIndex((e) => e.id === editingId);
       if (idx >= 0) {
         all[idx] = {
           ...all[idx],
-          ...formData,
+          nama: formData.nama,
+          nip: formData.nip,
+          jabatan: formData.jabatan,
+          unitKerja: formData.unitKerja,
+          role: formData.role,
+          username: formData.username,
           password: formData.password || all[idx].password,
+          status: formData.status,
+          kecamatanLat,
+          kecamatanLon,
         };
       }
       saveEmployees(all);
@@ -118,7 +154,16 @@ export default function ManajemenPegawaiPage() {
     } else {
       const newEmp: Employee = {
         id: `emp_${Date.now()}`,
-        ...formData,
+        nama: formData.nama,
+        nip: formData.nip,
+        jabatan: formData.jabatan,
+        unitKerja: formData.unitKerja,
+        role: formData.role,
+        username: formData.username,
+        password: formData.password,
+        status: formData.status,
+        kecamatanLat,
+        kecamatanLon,
         createdAt: new Date().toISOString(),
       };
       all.push(newEmp);
@@ -138,10 +183,7 @@ export default function ManajemenPegawaiPage() {
     toast.success("Pegawai berhasil dihapus.");
   };
 
-  const updateField = <K extends keyof FormData>(
-    key: K,
-    value: FormData[K],
-  ) => {
+  const updateField = (key: string, value: string | null) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
     if (formErrors[key])
       setFormErrors((prev) => ({ ...prev, [key]: undefined }));
@@ -197,7 +239,7 @@ export default function ManajemenPegawaiPage() {
           <h3 className="text-white font-semibold text-sm">Daftar Pegawai</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" style={{ minWidth: "560px" }}>
+          <table className="w-full text-sm" style={{ minWidth: "620px" }}>
             <thead>
               <tr style={{ background: "#F1F5F9" }}>
                 <th className="px-3 md:px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
@@ -216,6 +258,9 @@ export default function ManajemenPegawaiPage() {
                   Unit Kerja
                 </th>
                 <th className="px-3 md:px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                  Titik Absen
+                </th>
+                <th className="px-3 md:px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                   Status
                 </th>
                 <th className="px-3 md:px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
@@ -227,7 +272,7 @@ export default function ManajemenPegawaiPage() {
               {employees.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-gray-400"
                     data-ocid="manajemen.empty_state"
                   >
@@ -276,6 +321,24 @@ export default function ManajemenPegawaiPage() {
                       {emp.unitKerja}
                     </td>
                     <td className="px-3 md:px-4 py-3">
+                      {emp.kecamatanLat != null && emp.kecamatanLon != null ? (
+                        <div className="flex items-center gap-1">
+                          <MapPin
+                            size={11}
+                            className="text-green-500 flex-shrink-0"
+                          />
+                          <span className="text-[10px] text-green-700 font-mono">
+                            {emp.kecamatanLat.toFixed(4)},
+                            {emp.kecamatanLon.toFixed(4)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-orange-400">
+                          Belum diset
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 md:px-4 py-3">
                       <Badge
                         className="text-xs px-2 py-0.5 border-none"
                         style={{
@@ -319,7 +382,7 @@ export default function ManajemenPegawaiPage() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent
-          className="w-[calc(100vw-2rem)] max-w-lg mx-auto"
+          className="w-[calc(100vw-2rem)] max-w-lg mx-auto max-h-[90vh] overflow-y-auto"
           data-ocid="manajemen.employee.dialog"
         >
           <DialogHeader>
@@ -345,12 +408,7 @@ export default function ManajemenPegawaiPage() {
                 className="text-sm"
               />
               {formErrors.nama && (
-                <p
-                  className="text-xs text-red-500"
-                  data-ocid="manajemen.nama_error"
-                >
-                  {formErrors.nama}
-                </p>
+                <p className="text-xs text-red-500">{formErrors.nama}</p>
               )}
             </div>
 
@@ -370,12 +428,7 @@ export default function ManajemenPegawaiPage() {
                 className="text-sm"
               />
               {formErrors.nip && (
-                <p
-                  className="text-xs text-red-500"
-                  data-ocid="manajemen.nip_error"
-                >
-                  {formErrors.nip}
-                </p>
+                <p className="text-xs text-red-500">{formErrors.nip}</p>
               )}
             </div>
 
@@ -395,12 +448,7 @@ export default function ManajemenPegawaiPage() {
                 className="text-sm"
               />
               {formErrors.jabatan && (
-                <p
-                  className="text-xs text-red-500"
-                  data-ocid="manajemen.jabatan_error"
-                >
-                  {formErrors.jabatan}
-                </p>
+                <p className="text-xs text-red-500">{formErrors.jabatan}</p>
               )}
             </div>
 
@@ -420,12 +468,7 @@ export default function ManajemenPegawaiPage() {
                 className="text-sm"
               />
               {formErrors.unitKerja && (
-                <p
-                  className="text-xs text-red-500"
-                  data-ocid="manajemen.unit_error"
-                >
-                  {formErrors.unitKerja}
-                </p>
+                <p className="text-xs text-red-500">{formErrors.unitKerja}</p>
               )}
             </div>
 
@@ -445,12 +488,7 @@ export default function ManajemenPegawaiPage() {
                 className="text-sm"
               />
               {formErrors.username && (
-                <p
-                  className="text-xs text-red-500"
-                  data-ocid="manajemen.username_error"
-                >
-                  {formErrors.username}
-                </p>
+                <p className="text-xs text-red-500">{formErrors.username}</p>
               )}
             </div>
 
@@ -471,12 +509,7 @@ export default function ManajemenPegawaiPage() {
                 className="text-sm"
               />
               {formErrors.password && (
-                <p
-                  className="text-xs text-red-500"
-                  data-ocid="manajemen.password_error"
-                >
-                  {formErrors.password}
-                </p>
+                <p className="text-xs text-red-500">{formErrors.password}</p>
               )}
             </div>
 
@@ -484,9 +517,7 @@ export default function ManajemenPegawaiPage() {
               <Label className="text-xs font-medium text-gray-600">Role</Label>
               <Select
                 value={formData.role}
-                onValueChange={(v) =>
-                  updateField("role", v as "admin" | "pegawai")
-                }
+                onValueChange={(v) => updateField("role", v)}
               >
                 <SelectTrigger
                   data-ocid="manajemen.role.select"
@@ -507,9 +538,7 @@ export default function ManajemenPegawaiPage() {
               </Label>
               <Select
                 value={formData.status}
-                onValueChange={(v) =>
-                  updateField("status", v as "Aktif" | "Tidak Aktif")
-                }
+                onValueChange={(v) => updateField("status", v)}
               >
                 <SelectTrigger
                   data-ocid="manajemen.status.select"
@@ -522,6 +551,65 @@ export default function ManajemenPegawaiPage() {
                   <SelectItem value="Tidak Aktif">Tidak Aktif</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Koordinat Kecamatan */}
+            <div className="col-span-1 sm:col-span-2">
+              <div
+                className="rounded-lg p-3 space-y-3"
+                style={{ background: "#F0F7FF", border: "1px solid #BFD9F2" }}
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} style={{ color: "#2E7BC6" }} />
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: "#0A2B45" }}
+                  >
+                    Titik Pusat Absensi (Koordinat Kecamatan)
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  Absensi hanya bisa dilakukan dalam radius 300 meter dari titik
+                  ini. Cari koordinat kecamatan di Google Maps lalu salin
+                  latitude &amp; longitude-nya.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-600">Latitude</Label>
+                    <Input
+                      data-ocid="manajemen.kecamatan_lat.input"
+                      value={formData.kecamatanLatStr}
+                      onChange={(e) =>
+                        updateField("kecamatanLatStr", e.target.value)
+                      }
+                      placeholder="Contoh: -6.1752"
+                      className="text-sm font-mono"
+                    />
+                    {formErrors.kecamatanLatStr && (
+                      <p className="text-xs text-red-500">
+                        {formErrors.kecamatanLatStr}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-600">Longitude</Label>
+                    <Input
+                      data-ocid="manajemen.kecamatan_lon.input"
+                      value={formData.kecamatanLonStr}
+                      onChange={(e) =>
+                        updateField("kecamatanLonStr", e.target.value)
+                      }
+                      placeholder="Contoh: 106.8272"
+                      className="text-sm font-mono"
+                    />
+                    {formErrors.kecamatanLonStr && (
+                      <p className="text-xs text-red-500">
+                        {formErrors.kecamatanLonStr}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

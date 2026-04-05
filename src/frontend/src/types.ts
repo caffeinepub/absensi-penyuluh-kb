@@ -9,6 +9,9 @@ export interface Employee {
   password: string;
   status: "Aktif" | "Tidak Aktif";
   createdAt: string;
+  // Koordinat titik absensi kecamatan
+  kecamatanLat?: number | null;
+  kecamatanLon?: number | null;
 }
 
 export interface Attendance {
