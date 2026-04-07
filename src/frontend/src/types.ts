@@ -12,6 +12,8 @@ export interface Employee {
   // Koordinat titik absensi kecamatan
   kecamatanLat?: number | null;
   kecamatanLon?: number | null;
+  // Foto pegawai (base64 data URL)
+  foto?: string | null;
 }
 
 export interface Attendance {

@@ -105,14 +105,28 @@ export default function EmployeeCard({
         </div>
 
         <div className="relative z-10 flex items-center gap-6 px-6 py-5">
-          <div
-            className="w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl font-bold text-white shadow-lg"
-            style={{
-              background: "rgba(255,255,255,0.2)",
-              border: "2px solid rgba(255,255,255,0.4)",
-            }}
-          >
-            {getInitials(employee.nama)}
+          {/* Foto atau Inisial */}
+          <div className="flex-shrink-0">
+            {employee.foto ? (
+              <img
+                src={employee.foto}
+                alt={employee.nama}
+                className="w-20 h-20 rounded-xl object-cover shadow-lg"
+                style={{
+                  border: "2px solid rgba(255,255,255,0.5)",
+                }}
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-xl flex items-center justify-center text-2xl font-bold text-white shadow-lg"
+                style={{
+                  background: "rgba(255,255,255,0.2)",
+                  border: "2px solid rgba(255,255,255,0.4)",
+                }}
+              >
+                {getInitials(employee.nama)}
+              </div>
+            )}
           </div>
 
           <div className="flex-1">

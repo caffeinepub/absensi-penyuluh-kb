@@ -111,7 +111,12 @@ export default function App() {
           {currentPage === "tugasluar" && (
             <AbsenTugasLuarPage user={currentUser} />
           )}
-          {currentPage === "kartu" && <KartuPegawaiPage user={currentUser} />}
+          {currentPage === "kartu" && (
+            <KartuPegawaiPage
+              user={currentUser}
+              onUserUpdate={handleUserUpdate}
+            />
+          )}
           {currentPage === "rekap" && <RekapPage user={currentUser} />}
           {currentPage === "manajemen" && currentUser.role === "admin" && (
             <ManajemenPegawaiPage />

@@ -26,9 +26,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Pencil, Plus, Trash2, Users } from "lucide-react";
+import {
+  Camera,
+  MapPin,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload,
+  Users,
+} from "lucide-react";
 import { motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Employee } from "../types";
 import { getEmployees, saveEmployees } from "../utils/storage";
@@ -51,6 +59,7 @@ const emptyForm: FormData = {
   kecamatanLon: null,
   kecamatanLatStr: "",
   kecamatanLonStr: "",
+  foto: null,
 };
 
 export default function ManajemenPegawaiPage() {
@@ -62,6 +71,8 @@ export default function ManajemenPegawaiPage() {
   const [formErrors, setFormErrors] = useState<Partial<Record<string, string>>>(
     {},
   );
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const pegawaiCount = useMemo(
     () => employees.filter((e) => e.role === "pegawai").length,
@@ -117,9 +128,19 @@ export default function ManajemenPegawaiPage() {
       kecamatanLon: emp.kecamatanLon ?? null,
       kecamatanLatStr: emp.kecamatanLat != null ? String(emp.kecamatanLat) : "",
       kecamatanLonStr: emp.kecamatanLon != null ? String(emp.kecamatanLon) : "",
+      foto: emp.foto ?? null,
     });
     setFormErrors({});
     setIsDialogOpen(true);
+  };
+
+  const handleFotoChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setFormData((prev) => ({ ...prev, foto: result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = () => {
@@ -147,6 +168,7 @@ export default function ManajemenPegawaiPage() {
           status: formData.status,
           kecamatanLat,
           kecamatanLon,
+          foto: formData.foto ?? all[idx].foto ?? null,
         };
       }
       saveEmployees(all);
@@ -164,6 +186,7 @@ export default function ManajemenPegawaiPage() {
         status: formData.status,
         kecamatanLat,
         kecamatanLon,
+        foto: formData.foto ?? null,
         createdAt: new Date().toISOString(),
       };
       all.push(newEmp);
@@ -292,15 +315,27 @@ export default function ManajemenPegawaiPage() {
                     </td>
                     <td className="px-3 md:px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                          style={{
-                            background:
-                              emp.role === "admin" ? "#D84A4A" : "#2F6FB0",
-                          }}
-                        >
-                          {emp.nama.substring(0, 2).toUpperCase()}
-                        </div>
+                        {emp.foto ? (
+                          <img
+                            src={emp.foto}
+                            alt={emp.nama}
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0 border-2"
+                            style={{
+                              borderColor:
+                                emp.role === "admin" ? "#D84A4A" : "#2F6FB0",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                            style={{
+                              background:
+                                emp.role === "admin" ? "#D84A4A" : "#2F6FB0",
+                            }}
+                          >
+                            {emp.nama.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <div className="font-semibold text-gray-800 text-xs">
                             {emp.nama}
@@ -392,6 +427,101 @@ export default function ManajemenPegawaiPage() {
           </DialogHeader>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 py-2">
+            {/* Foto Pegawai */}
+            <div className="col-span-1 sm:col-span-2">
+              <div
+                className="rounded-lg p-3 space-y-3"
+                style={{ background: "#F8FAFC", border: "1px solid #E2EAF2" }}
+              >
+                <Label
+                  className="text-xs font-semibold"
+                  style={{ color: "#0A2B45" }}
+                >
+                  Foto Pegawai
+                </Label>
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+                    style={{
+                      background: "rgba(14,59,110,0.12)",
+                      border: "2px dashed #2E7BC6",
+                    }}
+                  >
+                    {formData.foto ? (
+                      <img
+                        src={formData.foto}
+                        alt="Foto pegawai"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="text-2xl font-bold"
+                        style={{ color: "#2E7BC6" }}
+                      >
+                        {formData.nama
+                          ? formData.nama.substring(0, 2).toUpperCase()
+                          : "?"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fotoInputRef.current?.click()}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors"
+                      style={{ background: "#2E7BC6" }}
+                    >
+                      <Upload size={13} />
+                      Upload Foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                      style={{ background: "#EBF4FB", color: "#2E7BC6" }}
+                    >
+                      <Camera size={13} />
+                      Ambil dari Kamera
+                    </button>
+                    {formData.foto && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, foto: null }))
+                        }
+                        className="text-xs text-red-400 hover:text-red-600 transition-colors text-left"
+                      >
+                        Hapus foto
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <input
+                  ref={fotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFotoChange(file);
+                    e.target.value = "";
+                  }}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFotoChange(file);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label
                 htmlFor="nama"
