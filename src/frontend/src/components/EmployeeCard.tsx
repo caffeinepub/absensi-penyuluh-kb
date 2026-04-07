@@ -3,6 +3,7 @@ import type { Employee } from "../types";
 interface EmployeeCardProps {
   employee: Employee;
   showPrintButton?: boolean;
+  onDownload?: () => void;
 }
 
 function getInitials(nama: string): string {
@@ -62,6 +63,7 @@ function QRCodeSVG({ value }: { value: string }) {
 export default function EmployeeCard({
   employee,
   showPrintButton = true,
+  onDownload,
 }: EmployeeCardProps) {
   const handlePrint = () => {
     window.print();
@@ -180,15 +182,28 @@ export default function EmployeeCard({
       </div>
 
       {showPrintButton && (
-        <button
-          type="button"
-          data-ocid="kartu.print.button"
-          onClick={handlePrint}
-          className="px-6 py-2.5 rounded-lg text-white text-sm font-semibold transition-colors"
-          style={{ background: "#2E7BC6" }}
-        >
-          🖨️ Cetak / Download Kartu
-        </button>
+        <div className="flex gap-3 flex-wrap justify-center">
+          <button
+            type="button"
+            data-ocid="kartu.print.button"
+            onClick={handlePrint}
+            className="px-6 py-2.5 rounded-lg text-white text-sm font-semibold transition-colors"
+            style={{ background: "#2E7BC6" }}
+          >
+            🖨️ Cetak Kartu
+          </button>
+          {onDownload && (
+            <button
+              type="button"
+              data-ocid="kartu.download.button"
+              onClick={onDownload}
+              className="px-6 py-2.5 rounded-lg text-white text-sm font-semibold transition-colors"
+              style={{ background: "#1A6B5A" }}
+            >
+              ⬇️ Download (Ukuran ATM)
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

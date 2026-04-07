@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import html2canvas from "html2canvas";
 import { Camera, Upload } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useRef, useState } from "react";
@@ -25,6 +26,7 @@ export default function KartuPegawaiPage({
   const isAdmin = user.role === "admin";
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(user.id);
   const [, setRefreshKey] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +40,41 @@ export default function KartuPegawaiPage({
     return allEmployees.find((e) => e.id === selectedEmployeeId) ?? user;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, selectedEmployeeId, user]);
+
+  const handleDownload = async () => {
+    const cardEl = document.getElementById("employee-card-print");
+    if (!cardEl) return;
+    setIsDownloading(true);
+    try {
+      // Capture the card element at 3x scale for high quality
+      const canvas = await html2canvas(cardEl, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        width: cardEl.offsetWidth,
+        height: cardEl.offsetHeight,
+      });
+
+      // Resize to ATM card standard: 85.6mm x 53.98mm at 300dpi = 1012 x 638px
+      const atmCanvas = document.createElement("canvas");
+      atmCanvas.width = 1012;
+      atmCanvas.height = 638;
+      const ctx = atmCanvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(canvas, 0, 0, 1012, 638);
+
+      const link = document.createElement("a");
+      link.download = `kartu-pegawai-${selectedEmployee.nama.replace(/\s+/g, "-")}.png`;
+      link.href = atmCanvas.toDataURL("image/png", 1.0);
+      link.click();
+      toast.success("Kartu berhasil didownload!");
+    } catch (_e) {
+      toast.error("Gagal mengunduh kartu, coba cetak dari browser.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleFotoChange = (file: File) => {
     const reader = new FileReader();
@@ -120,7 +157,11 @@ export default function KartuPegawaiPage({
 
         <div className="p-4 md:p-6 flex justify-center">
           <div className="w-full max-w-sm md:max-w-none">
-            <EmployeeCard employee={selectedEmployee} showPrintButton />
+            <EmployeeCard
+              employee={selectedEmployee}
+              showPrintButton
+              onDownload={isDownloading ? undefined : handleDownload}
+            />
           </div>
         </div>
 
