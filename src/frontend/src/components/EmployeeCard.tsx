@@ -89,16 +89,13 @@ export default function EmployeeCard({
           <div className="flex items-center gap-2">
             <img
               src="/assets/logo_bkkbn-019d5e48-16d8-73fe-a725-df08e9261adf.jpg"
-              alt="Logo BKKBN"
+              alt="Logo DP2KBP3A"
               className="w-8 h-8 rounded-full object-contain"
               style={{ background: "white", padding: "2px" }}
             />
             <div>
               <div className="text-white font-bold text-sm tracking-widest">
-                BKKBN
-              </div>
-              <div className="text-white/70 text-[10px]">
-                Badan Kependudukan dan Keluarga Berencana
+                DP2KBP3A KAB SUBANG
               </div>
             </div>
           </div>
@@ -163,7 +160,7 @@ export default function EmployeeCard({
           className="relative z-10 px-6 py-2 text-[10px] text-white/60 flex justify-between"
           style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
         >
-          <span>E-VISUM PKB</span>
+          <span>E-ABSENSI</span>
           <span>Tahun {new Date().getFullYear()}</span>
         </div>
       </div>

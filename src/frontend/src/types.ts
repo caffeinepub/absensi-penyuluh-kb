@@ -25,7 +25,11 @@ export interface Attendance {
   latitude: number | null;
   longitude: number | null;
   fotoDataUrl: string | null;
-  status: "Hadir" | "Izin" | "Sakit" | "Alpha";
+  status: "Hadir" | "Izin" | "Sakit" | "Alpha" | "Tugas Luar";
+  // Field khusus tugas luar
+  jenisTugas?: "reguler" | "luar";
+  tujuanTugas?: string | null;
+  suratTugasDataUrl?: string | null;
 }
 
 export type Page =
@@ -34,4 +38,5 @@ export type Page =
   | "kartu"
   | "rekap"
   | "manajemen"
-  | "ubahpassword";
+  | "ubahpassword"
+  | "tugasluar";

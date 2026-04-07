@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
+  Briefcase,
   ClipboardCheck,
   CreditCard,
   KeyRound,
@@ -28,6 +29,7 @@ const navItems: {
 }[] = [
   { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
   { id: "absensi", label: "Absensi", icon: <ClipboardCheck size={18} /> },
+  { id: "tugasluar", label: "Absen Tugas Luar", icon: <Briefcase size={18} /> },
   { id: "kartu", label: "Kartu Pegawai", icon: <CreditCard size={18} /> },
   { id: "rekap", label: "Rekap Kehadiran", icon: <BarChart3 size={18} /> },
   {
@@ -69,16 +71,17 @@ function SidebarContent({
       >
         <div className="flex items-center gap-3">
           <img
-            src="/assets/logo_bkkbn-019d5e48-16d8-73fe-a725-df08e9261adf.jpg"
-            alt="Logo BKKBN"
+            src="/assets/images_18-019d5e7e-41cd-738e-b0d9-d2e6dc73af5d.jpg"
+            alt="Logo E-ABSENSI"
             className="w-9 h-9 rounded-lg flex-shrink-0 object-contain"
+            style={{ background: "white", padding: "2px" }}
           />
           <div>
             <div className="text-white font-bold text-sm leading-tight tracking-wide">
-              E-VISUM PKB
+              E-ABSENSI
             </div>
             <div className="text-xs" style={{ color: "#7BA7C9" }}>
-              Sistem Informasi
+              Sistem absensi pegawai
             </div>
           </div>
         </div>
@@ -96,29 +99,51 @@ function SidebarContent({
 
       {/* Nav Items */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {visibleItems.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            data-ocid={`sidebar.${item.id}.link`}
-            onClick={() => handleNav(item.id)}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left",
-              currentPage === item.id ? "text-white" : "hover:text-white",
-            )}
-            style={{
-              background: currentPage === item.id ? "#2F6FB0" : "transparent",
-              color: currentPage === item.id ? "white" : "#A8C4DC",
-            }}
-          >
-            <span
-              style={{ color: currentPage === item.id ? "white" : "#7BA7C9" }}
+        {visibleItems.map((item) => {
+          const isTugasLuar = item.id === "tugasluar";
+          const isActive = currentPage === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              data-ocid={`sidebar.${item.id}.link`}
+              onClick={() => handleNav(item.id)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left",
+                isActive ? "text-white" : "hover:text-white",
+              )}
+              style={{
+                background: isActive
+                  ? isTugasLuar
+                    ? "#6D28D9"
+                    : "#2F6FB0"
+                  : "transparent",
+                color: isActive ? "white" : "#A8C4DC",
+              }}
             >
-              {item.icon}
-            </span>
-            {item.label}
-          </button>
-        ))}
+              <span
+                style={{
+                  color: isActive
+                    ? "white"
+                    : isTugasLuar
+                      ? "#C4B5FD"
+                      : "#7BA7C9",
+                }}
+              >
+                {item.icon}
+              </span>
+              {item.label}
+              {isTugasLuar && !isActive && (
+                <span
+                  className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background: "#6D28D9", color: "white" }}
+                >
+                  LUAR
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Logout */}
@@ -179,7 +204,7 @@ export default function Sidebar({
         />
       </aside>
 
-      {/* Mobile overlay backdrop — uses button for keyboard accessibility */}
+      {/* Mobile overlay backdrop */}
       {isOpen && (
         <button
           type="button"

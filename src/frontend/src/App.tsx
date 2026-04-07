@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import MobileBottomNav from "./components/MobileBottomNav";
 import Sidebar from "./components/Sidebar";
+import AbsenTugasLuarPage from "./pages/AbsenTugasLuarPage";
 import AbsensiPage from "./pages/AbsensiPage";
 import DashboardPage from "./pages/DashboardPage";
 import KartuPegawaiPage from "./pages/KartuPegawaiPage";
@@ -76,6 +77,7 @@ export default function App() {
   const pageTitles: Record<Page, string> = {
     dashboard: "Dashboard",
     absensi: "Absensi",
+    tugasluar: "Absen Tugas Luar",
     kartu: "Kartu Pegawai",
     rekap: "Rekap Kehadiran",
     manajemen: "Manajemen Pegawai",
@@ -106,6 +108,9 @@ export default function App() {
             <DashboardPage user={currentUser} onNavigate={handleNavigate} />
           )}
           {currentPage === "absensi" && <AbsensiPage user={currentUser} />}
+          {currentPage === "tugasluar" && (
+            <AbsenTugasLuarPage user={currentUser} />
+          )}
           {currentPage === "kartu" && <KartuPegawaiPage user={currentUser} />}
           {currentPage === "rekap" && <RekapPage user={currentUser} />}
           {currentPage === "manajemen" && currentUser.role === "admin" && (
@@ -131,7 +136,7 @@ export default function App() {
         </footer>
       </div>
 
-      {/* Mobile bottom navigation — hidden on desktop */}
+      {/* Mobile bottom navigation */}
       <MobileBottomNav currentPage={currentPage} onNavigate={handleNavigate} />
 
       <Toaster />

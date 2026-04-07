@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   AlertCircle,
   ArrowRight,
+  Briefcase,
   CheckCircle,
   ClipboardCheck,
   Users,
@@ -22,6 +23,7 @@ const statusColors: Record<string, string> = {
   Izin: "#D97706",
   Sakit: "#2E7BC6",
   Alpha: "#D84A4A",
+  "Tugas Luar": "#7C3AED",
 };
 
 export default function DashboardPage({ onNavigate }: DashboardPageProps) {
@@ -53,6 +55,9 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
   const alphaCount = todayAttendances.filter(
     (a) => a.status === "Alpha",
   ).length;
+  const tugasLuarCount = todayAttendances.filter(
+    (a) => a.status === "Tugas Luar",
+  ).length;
 
   const metrics = [
     {
@@ -83,11 +88,18 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       color: "#D84A4A",
       bg: "#FEE2E2",
     },
+    {
+      label: "Tugas Luar",
+      value: tugasLuarCount,
+      icon: <Briefcase size={22} />,
+      color: "#7C3AED",
+      bg: "#F3EEFF",
+    },
   ];
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         {metrics.map((m, i) => (
           <motion.div
             key={m.label}
@@ -150,6 +162,16 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
           >
             Absensi
             <ArrowRight size={16} />
+          </button>
+          <button
+            type="button"
+            data-ocid="dashboard.tugasluar.button"
+            onClick={() => onNavigate("tugasluar")}
+            className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex-shrink-0"
+            style={{ background: "#6D28D9", color: "white" }}
+          >
+            <Briefcase size={14} />
+            Tugas Luar
           </button>
         </div>
       </motion.div>

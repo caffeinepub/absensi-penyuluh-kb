@@ -61,16 +61,16 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}
           >
             <img
-              src="/assets/logo_bkkbn-019d5e48-16d8-73fe-a725-df08e9261adf.jpg"
-              alt="Logo BKKBN"
+              src="/assets/images_18-019d5e7e-41cd-738e-b0d9-d2e6dc73af5d.jpg"
+              alt="Logo E-ABSENSI"
               className="w-16 h-16 rounded-2xl mx-auto mb-4 object-contain"
               style={{ background: "white", padding: "4px" }}
             />
             <h1 className="text-2xl font-bold text-white tracking-wide">
-              E-VISUM PKB
+              E-ABSENSI
             </h1>
             <p className="text-sm mt-1" style={{ color: "#7BA7C9" }}>
-              Sistem Informasi Absensi Pegawai Penyuluh KB
+              Sistem absensi pegawai
             </p>
           </div>
 
