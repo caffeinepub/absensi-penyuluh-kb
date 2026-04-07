@@ -4,6 +4,7 @@ interface EmployeeCardProps {
   employee: Employee;
   showPrintButton?: boolean;
   onDownload?: () => void;
+  onDownloadPdf?: () => void;
 }
 
 function getInitials(nama: string): string {
@@ -64,6 +65,7 @@ export default function EmployeeCard({
   employee,
   showPrintButton = true,
   onDownload,
+  onDownloadPdf,
 }: EmployeeCardProps) {
   const handlePrint = () => {
     window.print();
@@ -200,7 +202,18 @@ export default function EmployeeCard({
               className="px-6 py-2.5 rounded-lg text-white text-sm font-semibold transition-colors"
               style={{ background: "#1A6B5A" }}
             >
-              ⬇️ Download (Ukuran ATM)
+              ⬇️ Download PNG
+            </button>
+          )}
+          {onDownloadPdf && (
+            <button
+              type="button"
+              data-ocid="kartu.download.pdf.button"
+              onClick={onDownloadPdf}
+              className="px-6 py-2.5 rounded-lg text-white text-sm font-semibold transition-colors"
+              style={{ background: "#C0392B" }}
+            >
+              📄 Download PDF
             </button>
           )}
         </div>

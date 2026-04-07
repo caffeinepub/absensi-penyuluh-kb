@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { Camera, Upload } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useRef, useState } from "react";
@@ -27,6 +28,7 @@ export default function KartuPegawaiPage({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(user.id);
   const [, setRefreshKey] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,29 +43,31 @@ export default function KartuPegawaiPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, selectedEmployeeId, user]);
 
-  const handleDownload = async () => {
+  const captureCardCanvas = async () => {
     const cardEl = document.getElementById("employee-card-print");
-    if (!cardEl) return;
+    if (!cardEl) throw new Error("Card element not found");
+    const canvas = await html2canvas(cardEl, {
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      width: cardEl.offsetWidth,
+      height: cardEl.offsetHeight,
+    });
+    // Resize to ATM card standard: 85.6mm x 53.98mm at 300dpi = 1012 x 638px
+    const atmCanvas = document.createElement("canvas");
+    atmCanvas.width = 1012;
+    atmCanvas.height = 638;
+    const ctx = atmCanvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas context not available");
+    ctx.drawImage(canvas, 0, 0, 1012, 638);
+    return atmCanvas;
+  };
+
+  const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      // Capture the card element at 3x scale for high quality
-      const canvas = await html2canvas(cardEl, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        width: cardEl.offsetWidth,
-        height: cardEl.offsetHeight,
-      });
-
-      // Resize to ATM card standard: 85.6mm x 53.98mm at 300dpi = 1012 x 638px
-      const atmCanvas = document.createElement("canvas");
-      atmCanvas.width = 1012;
-      atmCanvas.height = 638;
-      const ctx = atmCanvas.getContext("2d");
-      if (!ctx) return;
-      ctx.drawImage(canvas, 0, 0, 1012, 638);
-
+      const atmCanvas = await captureCardCanvas();
       const link = document.createElement("a");
       link.download = `kartu-pegawai-${selectedEmployee.nama.replace(/\s+/g, "-")}.png`;
       link.href = atmCanvas.toDataURL("image/png", 1.0);
@@ -73,6 +77,35 @@ export default function KartuPegawaiPage({
       toast.error("Gagal mengunduh kartu, coba cetak dari browser.");
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    try {
+      const atmCanvas = await captureCardCanvas();
+      const imgData = atmCanvas.toDataURL("image/png", 1.0);
+
+      // ATM card size in mm: 85.6 x 53.98
+      const cardWidthMm = 85.6;
+      const cardHeightMm = 53.98;
+
+      // Create PDF with landscape ATM card dimensions
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [cardWidthMm, cardHeightMm],
+      });
+
+      pdf.addImage(imgData, "PNG", 0, 0, cardWidthMm, cardHeightMm);
+      pdf.save(
+        `kartu-pegawai-${selectedEmployee.nama.replace(/\s+/g, "-")}.pdf`,
+      );
+      toast.success("Kartu berhasil didownload sebagai PDF!");
+    } catch (_e) {
+      toast.error("Gagal mengunduh PDF, coba cetak dari browser.");
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -161,6 +194,7 @@ export default function KartuPegawaiPage({
               employee={selectedEmployee}
               showPrintButton
               onDownload={isDownloading ? undefined : handleDownload}
+              onDownloadPdf={isDownloadingPdf ? undefined : handleDownloadPdf}
             />
           </div>
         </div>
