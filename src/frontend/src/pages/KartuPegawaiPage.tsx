@@ -43,23 +43,43 @@ export default function KartuPegawaiPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, selectedEmployeeId, user]);
 
-  const captureCardCanvas = async () => {
+  const captureCardCanvas = async (): Promise<HTMLCanvasElement> => {
     const cardEl = document.getElementById("employee-card-print");
-    if (!cardEl) throw new Error("Card element not found");
+    if (!cardEl) throw new Error("Elemen kartu tidak ditemukan");
+
+    // Tunggu semua gambar selesai dimuat
+    const images = cardEl.querySelectorAll("img");
+    await Promise.all(
+      Array.from(images).map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete) {
+              resolve();
+            } else {
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            }
+          }),
+      ),
+    );
+
     const canvas = await html2canvas(cardEl, {
       scale: 3,
       useCORS: true,
       allowTaint: true,
       backgroundColor: null,
+      logging: false,
       width: cardEl.offsetWidth,
       height: cardEl.offsetHeight,
+      foreignObjectRendering: false,
     });
-    // Resize to ATM card standard: 85.6mm x 53.98mm at 300dpi = 1012 x 638px
+
+    // Resize ke ukuran kartu ATM standar: 1012 x 638px (85.6mm x 53.98mm @ 300dpi)
     const atmCanvas = document.createElement("canvas");
     atmCanvas.width = 1012;
     atmCanvas.height = 638;
     const ctx = atmCanvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas context not available");
+    if (!ctx) throw new Error("Canvas context tidak tersedia");
     ctx.drawImage(canvas, 0, 0, 1012, 638);
     return atmCanvas;
   };
@@ -71,10 +91,13 @@ export default function KartuPegawaiPage({
       const link = document.createElement("a");
       link.download = `kartu-pegawai-${selectedEmployee.nama.replace(/\s+/g, "-")}.png`;
       link.href = atmCanvas.toDataURL("image/png", 1.0);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       toast.success("Kartu berhasil didownload!");
-    } catch (_e) {
-      toast.error("Gagal mengunduh kartu, coba cetak dari browser.");
+    } catch (e) {
+      console.error("Download PNG error:", e);
+      toast.error("Gagal mengunduh kartu. Coba gunakan tombol Cetak.");
     } finally {
       setIsDownloading(false);
     }
@@ -84,26 +107,29 @@ export default function KartuPegawaiPage({
     setIsDownloadingPdf(true);
     try {
       const atmCanvas = await captureCardCanvas();
-      const imgData = atmCanvas.toDataURL("image/png", 1.0);
 
-      // ATM card size in mm: 85.6 x 53.98
+      // Konversi canvas ke blob untuk menghindari masalah data URL yang terlalu panjang
+      const imgData = atmCanvas.toDataURL("image/jpeg", 0.95);
+
+      // Ukuran kartu ATM dalam mm: 85.6 x 53.98
       const cardWidthMm = 85.6;
       const cardHeightMm = 53.98;
 
-      // Create PDF with landscape ATM card dimensions
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
         format: [cardWidthMm, cardHeightMm],
+        compress: true,
       });
 
-      pdf.addImage(imgData, "PNG", 0, 0, cardWidthMm, cardHeightMm);
+      pdf.addImage(imgData, "JPEG", 0, 0, cardWidthMm, cardHeightMm);
       pdf.save(
         `kartu-pegawai-${selectedEmployee.nama.replace(/\s+/g, "-")}.pdf`,
       );
       toast.success("Kartu berhasil didownload sebagai PDF!");
-    } catch (_e) {
-      toast.error("Gagal mengunduh PDF, coba cetak dari browser.");
+    } catch (e) {
+      console.error("Download PDF error:", e);
+      toast.error("Gagal mengunduh PDF. Coba gunakan tombol Cetak.");
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -119,7 +145,6 @@ export default function KartuPegawaiPage({
       if (idx >= 0) {
         all[idx] = { ...all[idx], foto: dataUrl };
         saveEmployees(all);
-        // Update current user session if it's the logged-in user
         if (targetId === user.id) {
           const updated = all[idx];
           setCurrentUser(updated);
